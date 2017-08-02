@@ -1,0 +1,31 @@
+---
+- name: show ip routing table
+  gather_facts: true
+  connection: local
+  hosts: CiscoSwitches
+
+  tasks:
+   - name: IOS | show ip ro
+     ios_command:
+       timeout: 60
+       commands:
+         - show ip ro 
+     register: showiproute
+
+   - name: Save my output to backup location /etc/ansible/backupsshow_ip_ro_{{ inventory_hostname }}
+     copy:
+       content: "{{ showiproute.stdout[0] }}"
+       dest: "/etc/ansible/backups/show_ip_ro_{{ inventory_hostname }}.txt"
+   
+   - debug:
+       msg: "{{ showiproute.stdout_lines[0] }}"
+
+#   - name: Send notification message via Rocket Chat all options
+#     rocketchat:
+#       domain: rocket.azurix.net
+#       token: thetoken/generatedby/rocketchat
+#       msg: '{{ inventory_hostname }} show ip routing check completed'
+#       channel: ansible-alerts
+#       username: 'Ansible on {{ inventory_hostname }}'
+#       link_names: 1
+#     delegate_to: localhost

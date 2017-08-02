@@ -1,0 +1,213 @@
+# DSC Advanced
+---
+- name: DSC Configuration
+  gather_facts: true
+  connection: local
+  hosts: CiscoSwitches
+  
+  tasks:
+  
+   - name: IOS | generic-config
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - service password-encryption
+         - logging host 10.32.6.3
+  
+   - name: IOS | tacacs-server config
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - tacacs-server host 172.16.17.1 timeout 5 key 7 044C5F143F015846
+         - tacacs-server host 10.32.6.45 timeout 5 key 7 044C5F143F015846
+  
+   - name: IOS | ntp config - Part 1
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - clock timezone AEST 10 0
+         - clock summer-time AEDT recurring last Sun Oct 2:00 last Sun Mar 3:00
+         - ntp server 10.32.6.10 prefer
+         - ntp server 172.16.18.12
+
+   - name: IOS | feature source-config
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - ip radius source-interface Vlan200 
+         - logging source-interface Vlan200
+         - ip ftp source-interface Vlan200
+
+   - name: IOS | http switch access - Part 1
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - no ip http server
+         - ip http secure-server
+
+   - name: IOS | ftp-config - Part 1
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - ip ftp username ftpuser
+         - ip ftp password ftpuser
+
+   - name: IOS | aaa-config - Part 1
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - aaa server radius dynamic-author
+         - aaa group server tacacs+ clearpass
+       match: exact
+
+   - name: IOS | aaa-config - Part 2
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - client 172.16.17.1 server-key w4rP@th
+         - port 3799
+         - auth-type all
+       parents: aaa server radius dynamic-author
+       
+   - name: IOS | aaa-config - Part 3
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - server 172.16.17.1
+         - server 10.32.6.45
+       parents: aaa group server tacacs+ clearpass  
+
+   - name: IOS | aaa-config - Part 4
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - aaa authentication login default group clearpass local
+         - aaa authentication enable default group clearpass enable
+         - aaa authentication dot1x default group radius
+         - aaa authorization console
+         - aaa authorization config-commands
+         - aaa authorization exec default group clearpass local 
+         - aaa authorization commands 0 default group clearpass local 
+         - aaa authorization commands 1 default group clearpass if-authenticated 
+         - aaa authorization commands 15 default group clearpass local 
+         - aaa authorization network default group radius 
+         - aaa authorization configuration default group clearpass 
+         - aaa accounting dot1x default start-stop group radius
+         - aaa accounting exec default start-stop group clearpass
+         - aaa accounting commands 5 default start-stop group clearpass
+         - aaa accounting commands 15 default start-stop group clearpass
+         - aaa accounting connection default start-stop group clearpass
+ 
+   - name: IOS | line vty 0 15 Config - Part 1
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - transport input ssh
+         - transport output none
+         - exec-timeout 14 0
+         - logging synchronous
+       parents: line vty 0 15  
+
+   - name: IOS | snmp-config
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - snmp-server community azxr3adonly RO
+         - snmp-server trap-source Vlan200
+         - snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+         - snmp-server enable traps flowmon
+         - snmp-server enable traps transceiver all
+         - snmp-server enable traps call-home message-send-fail server-fail
+         - snmp-server enable traps tty
+         - snmp-server enable traps eigrp
+         - snmp-server enable traps ospf state-change
+         - snmp-server enable traps ospf errors
+         - snmp-server enable traps ospf retransmit
+         - snmp-server enable traps ospf lsa
+         - snmp-server enable traps ospf cisco-specific state-change nssa-trans-change
+         - snmp-server enable traps ospf cisco-specific state-change shamlink interface
+         - snmp-server enable traps ospf cisco-specific state-change shamlink neighbor
+         - snmp-server enable traps ospf cisco-specific errors
+         - snmp-server enable traps ospf cisco-specific retransmit
+         - snmp-server enable traps ospf cisco-specific lsa
+         - snmp-server enable traps license
+         - snmp-server enable traps auth-framework sec-violation
+         - snmp-server enable traps bgp
+         - snmp-server enable traps cef resource-failure peer-state-change peer-fib-state-change inconsistency
+         - snmp-server enable traps cluster
+         - snmp-server enable traps config-copy
+         - snmp-server enable traps config
+         - snmp-server enable traps config-ctid
+         - snmp-server enable traps energywise
+         - snmp-server enable traps fru-ctrl
+         - snmp-server enable traps entity
+         - snmp-server enable traps event-manager
+         - snmp-server enable traps hsrp
+         - snmp-server enable traps ipmulticast
+         - snmp-server enable traps ike policy add
+         - snmp-server enable traps ike policy delete
+         - snmp-server enable traps ike tunnel start
+         - snmp-server enable traps ike tunnel stop
+         - snmp-server enable traps ipsec cryptomap add
+         - snmp-server enable traps ipsec cryptomap delete
+         - snmp-server enable traps ipsec cryptomap attach
+         - snmp-server enable traps ipsec cryptomap detach
+         - snmp-server enable traps ipsec tunnel start
+         - snmp-server enable traps ipsec tunnel stop
+         - snmp-server enable traps ipsec too-many-sas
+         - snmp-server enable traps isis
+         - snmp-server enable traps msdp
+         - snmp-server enable traps power-ethernet group 1
+         - snmp-server enable traps power-ethernet group 2
+         - snmp-server enable traps power-ethernet police
+         - snmp-server enable traps pim neighbor-change rp-mapping-change invalid-pim-message
+         - snmp-server enable traps cpu threshold
+         - snmp-server enable traps rep
+         - snmp-server enable traps ipsla
+         - snmp-server enable traps vstack
+         - snmp-server enable traps bridge newroot topologychange
+         - snmp-server enable traps stpx inconsistency root-inconsistency loop-inconsistency
+         - snmp-server enable traps syslog
+         - snmp-server enable traps vtp
+         - snmp-server enable traps vlancreate
+         - snmp-server enable traps vlandelete
+         - snmp-server enable traps flash insertion removal
+         - snmp-server enable traps port-security
+         - snmp-server enable traps envmon fan shutdown supply temperature status
+         - snmp-server enable traps stackwise
+         - snmp-server enable traps alarms informational
+         - snmp-server enable traps bulkstat collection transfer
+         - snmp-server enable traps vrfmib vrf-up vrf-down vnet-trunk-up vnet-trunk-down
+         - snmp-server enable traps errdisable
+         - snmp-server enable traps mac-notification change move threshold
+         - snmp-server enable traps vlan-membership
+         - snmp-server host 10.32.6.3 azxr3adonly 
+         - snmp-server host 10.32.6.26 version 2c private udp-port 5161
+ 
+   - name: IOS | stp-config
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - spanning-tree mode rapid-pvst
+         - spanning-tree loopguard default
+         - spanning-tree logging
+         - spanning-tree portfast edge default
+         - spanning-tree portfast edge bpduguard default
+         - spanning-tree extend system-id
+         - spanning-tree vlan 10-4094 priority 4096
+
+
+       

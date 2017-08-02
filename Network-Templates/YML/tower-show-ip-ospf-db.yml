@@ -1,0 +1,22 @@
+---
+- name: show ip ospf datase scripts
+  gather_facts: true
+  connection: local
+  hosts: CiscoSwitches
+
+  tasks:
+   - name: IOS | show ip ospf database
+     ios_command:
+       commands:
+         - show ip ospf database
+     register: config
+
+   - name: Save my output to backup location /etc/ansible/backups 
+     copy:
+       content: "{{ config.stdout[0] }}"
+       dest: "/etc/ansible/backups/show_ip_ospf_database_{{ inventory_hostname }}.txt"
+       
+   - debug: 
+       msg: "{{ config.stdout_lines[0] }}"
+
+

@@ -1,0 +1,51 @@
+---
+- name: show snmp
+  gather_facts: true
+  connection: local
+  hosts: CiscoSwitches
+
+  tasks:
+   - name: IOS | show snmp
+     ios_command:
+       timeout: 30
+       commands:
+         - show run | s snmp
+     register: snmp
+
+   - name: Save my output to backup location /etc/ansible/backups/cisco-backups/show_run_snmp_{{ inventory_hostname }}
+     copy:
+       content: "{{ snmp.stdout[0] }}"
+       dest: "/etc/ansible/backups/cisco-backups/show_run_snmp_{{ inventory_hostname }}.txt"
+   
+   - debug:
+       msg: "{{ snmp.stdout_lines[0] }}"
+
+   - name: Add backup files to lcoal repo
+     shell: git add --all
+     args:
+       chdir: "/etc/ansible/backups/cisco-backups/"
+       
+   - name: Required for the commit - Changing local user name
+     shell: git config --global user.name "{{ gitlabuser }}@azurix.com.au"
+     args:
+       chdir: "/etc/ansible/backups/cisco-backups/"
+
+   - name: Required for the commit - Changing local user email
+     shell: git config --global user.email "{{ gitlabuser }}@azurix.com.au"
+     args:
+       chdir: "/etc/ansible/backups/cisco-backups/"
+       
+   - name: commit backup files to local repo
+     shell: git commit -m "ansible commit"
+     args:
+       chdir: "/etc/ansible/backups/cisco-backups/"  
+
+   - name: change the push url to a git call
+     shell: git remote set-url --push origin http://"{{ gitlabuser }}":"{{ gitlabpass }}"@gitlab.azurix.local/ansible-bal-netops/cisco-backups.git
+     args:
+       chdir: "/etc/ansible/backups/cisco-backups/"  
+
+   - name:  push back to the master branch
+     shell: git push origin master
+     args:
+       chdir: "/etc/ansible/backups/cisco-backups/"  

@@ -1,0 +1,22 @@
+---
+- name: show run
+  gather_facts: true
+  connection: local
+  hosts: CiscoSwitchesLocalPWD
+
+  tasks:
+   - name: IOS | show run
+     ios_command:
+      timeout: 120
+      authorize: yes
+      commands:
+         - show running-config
+     register: config
+
+   - name: Save my output to backup location /etc/ansible/backups/cisco-backups
+     copy:
+       content: "{{ config.stdout[0] }}"
+       dest: "/etc/ansible/backups/cisco-backups/show_run_{{ inventory_hostname }}.txt"
+   
+   - debug:
+       msg: "{{ config.stdout_lines[0] }}"

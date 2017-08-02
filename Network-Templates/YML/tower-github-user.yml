@@ -1,0 +1,20 @@
+---
+-
+- name: Test this GitUser
+  gather_facts: true
+  connection: local
+  host: GitlabServer
+
+  tasks:
+
+   - name: Create Gitlab User
+     gitlab_user:
+       server_url: http://gitlab.azurix.local
+       name: awx
+       username: awx
+       password: password
+       email: awx@azurix.com.au
+       state: present
+       access_level: master
+     delegate_to: localhost
+     

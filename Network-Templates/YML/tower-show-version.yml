@@ -1,0 +1,19 @@
+---
+- name: show version playbook
+  gather_facts: true
+  connection: local
+  hosts: CiscoSwitches
+  tasks:
+   - name: IOS | show version
+     ios_command:
+       timeout: 15
+       commands:
+         - show version
+     register: config
+   - name: Save my output to backup location /etc/ansible/backups/cisco-backups
+     copy:
+       content: "{{ config.stdout[0] }}"
+       dest: "/etc/ansible/backups/cisco-backups/show-version_{{ inventory_hostname }}.txt"
+   
+   - debug:
+       msg: "{{ config.stdout_lines[0] }}"

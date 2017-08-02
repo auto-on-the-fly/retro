@@ -1,0 +1,25 @@
+---
+- name: show ntp
+  gather_facts: true
+  connection: local
+  hosts: CiscoSwitchesLocalPWD
+
+  tasks:
+   - name: IOS | show ntp
+     ios_command:
+      timeout: 120
+      username: "{{ username }}"
+      password: "{{ password }}"
+      authorize: yes
+      auth_pass: "{{ enable }}"
+      commands:
+         - show run | s ntp
+     register: ntp
+
+   - debug:
+       msg: "{{ ntp.stdout_lines[0] }}"
+
+   - name: Save my output to backup location /etc/ansible/backups/cisco-backups
+     copy:
+       content: "{{ ntp.stdout[0] }}"
+       dest: "/etc/ansible/backups/cisco-backups/show_ntp_{{ inventory_hostname }}.txt"

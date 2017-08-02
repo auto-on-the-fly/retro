@@ -1,0 +1,22 @@
+# NTP Advanced
+---
+- name: set ntp server
+  gather_facts: true
+  connection: local
+  hosts: CiscoSwitchesLocalPWD
+  
+  tasks:
+  
+   - name: IOS | ntp commands
+     ios_config:
+       provider:
+         timeout: 15
+         username: "{{ username }}"
+         password: "{{ password }}"
+         authorize: yes
+         auth_pass: "{{ enable }}"
+       lines:
+         - clock timezone AEST 10 0
+         - clock summer-time AEDT recurring last Sun Oct 2:00 last Sun Mar 3:00
+         - ntp server 10.32.6.10 prefer
+         - ntp server 172.16.18.12

@@ -1,0 +1,69 @@
+---
+- name: Cisco AAA Config Playbook
+  gather_facts: true
+  connection: local
+  hosts: CiscoSwitches
+
+  tasks:
+  
+   - name: IOS | aaa-config - Part 1
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - aaa server radius dynamic-author
+         - aaa group server tacacs+ clearpass
+
+   - name: IOS | aaa-config - Part 2
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - client 172.16.17.1 server-key w4rP@th
+         - port 3799
+         - auth-type all
+       parents: aaa server radius dynamic-author
+       
+   - name: IOS | aaa-config - Part 3
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - server 172.16.17.1
+       parents: aaa group server tacacs+ clearpass  
+
+   - name: IOS | aaa-config - Part 4
+     ios_config:
+       provider:
+         timeout: 30
+       lines:
+         - aaa authentication login default group clearpass local
+         - aaa authentication enable default group clearpass enable
+         - aaa authentication dot1x default group radius
+         - aaa authorization console
+         - aaa authorization config-commands
+         - aaa authorization exec default group clearpass local 
+         - aaa authorization commands 0 default group clearpass none 
+         - aaa authorization commands 1 default group clearpass if-authenticated 
+         - aaa authorization commands 15 default group clearpass local 
+         - aaa authorization network default group radius 
+         - aaa authorization configuration default group clearpass 
+         - aaa accounting dot1x default start-stop group radius
+         - aaa accounting exec default start-stop group clearpass
+         - aaa accounting commands 5 default start-stop group clearpass
+         - aaa accounting commands 15 default start-stop group clearpass
+         - aaa accounting connection default start-stop group clearpass
+ 
+   - name: IOS | show run | s aaa
+     ios_command:
+       timeout: 60
+       commands:
+         - show run | s aaa
+     register: aaa
+   
+   - name: AAA Backups 
+     copy:
+       content: "{{ aaa.stdout[0] }}"
+       dest: "/etc/ansible/backups/cisco-backups/show_run_aaa_{{ inventory_hostname }}.txt"
+       
+        

@@ -1,0 +1,109 @@
+---
+- name: Daily Backup Scripts
+  gather_facts: true
+  connection: local
+  hosts: CiscoSwitches
+
+  tasks:
+   
+#   - name: Setup the Git repo
+#     git: 
+#       repo: ssh://git@gitlab.azurix.local:ansible-bal-netops/cisco-backups.git
+#       version: master
+#       dest: "/etc/ansible/backups/"
+#       accept_hostkey: yes
+#       key_file: "/var/lib/awx/.ssh/id_rsa_github"
+#       force: yes
+#       clone: no
+
+   - name: Get local git repo
+     git:
+       repo: http://"{{ gitlabuser }}":"{{ gitlabpass }}"@gitlab.azurix.local/ansible-bal-netops/cisco-backups.git
+       dest: "/etc/ansible/backups/cisco-backups"
+       refspec: '+refs/pull/*:refs/heads/*'
+       force: yes
+       clone: yes
+       
+   - name: IOS | show ip ro
+     ios_command:
+       commands:
+         - show ip ro 
+     register: showiproute
+
+   - name: Save my output to backup location /etc/ansible/backups 
+     copy:
+       content: "{{ showiproute.stdout[0] }}"
+       dest: "/etc/ansible/backups/cisco-backups/show_ip_ro_{{ inventory_hostname }}.txt"
+   
+   - name: IOS | show ip ospf database
+     ios_command:
+       commands:
+         - show ip ospf database
+     register: ospf
+
+   - name: back up | show ip ospf db
+     copy:
+       content: "{{ ospf.stdout[0] }}"
+       dest: "/etc/ansible/backups/cisco-backups/show_ip_ospf_database_{{ inventory_hostname }}.txt"
+       
+   - name: IOS | show run
+     ios_command:
+       commands:
+         - show run
+     register: runningconf
+
+   - name: back up | show run 
+     copy:
+       content: "{{ runningconf.stdout[0] }}"
+       dest: "/etc/ansible/backups/cisco-backups/show_run_{{ inventory_hostname }}.txt"
+
+   
+#   - debug:
+#       msg: "{{ runningconf.stdout_lines[0] }}"
+
+
+#   - name: Send notification message via Rocket Chat all options
+#     rocketchat:
+#       domain: rocket.azurix.net
+#       token: thetoken/generatedby/rocketchat
+#       msg: '{{ inventory_hostname }} show ip ospf db check completed'
+#       channel: ansible-alerts
+#       username: 'Ansible on {{ inventory_hostname }}'
+#       link_names: 1
+#     delegate_to: localhost
+#
+#   - name: Push back to the git repo
+#     shell: git add . && git commit -m "Ansible Auto Collections" && git push origin master  
+#     shell: git config --global user.name "{{ gitlabuser }}" git config --global user.email "{{ gitlabuser }}"@azurix.com.au && git add . && git commit -m "Ansible Auto Collections" && git push origin master
+#     args:
+#       chdir: "/etc/ansible/backups/cisco-backups/"
+
+   - name: Add backup files to lcoal repo
+     shell: git add --all
+     args:
+       chdir: "/etc/ansible/backups/cisco-backups/"
+       
+   - name: Required for the commit - Changing local user name
+     shell: git config --global user.name "{{ gitlabuser }}@azurix.com.au"
+     args:
+       chdir: "/etc/ansible/backups/cisco-backups/"
+
+   - name: Required for the commit - Changing local user email
+     shell: git config --global user.email "{{ gitlabuser }}@azurix.com.au"
+     args:
+       chdir: "/etc/ansible/backups/cisco-backups/"
+       
+   - name: commit backup files to local repo
+     shell: git commit -m "ansible commit"
+     args:
+       chdir: "/etc/ansible/backups/cisco-backups/"  
+
+   - name: change the push url to a git call
+     shell: git remote set-url --push origin http://"{{ gitlabuser }}":"{{ gitlabpass }}"@gitlab.azurix.local/ansible-bal-netops/cisco-backups.git
+     args:
+       chdir: "/etc/ansible/backups/cisco-backups/"  
+
+   - name:  push back to the master branch
+     shell: git push origin master
+     args:
+       chdir: "/etc/ansible/backups/cisco-backups/"  
