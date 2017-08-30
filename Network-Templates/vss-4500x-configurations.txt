@@ -84,12 +84,12 @@ switch virtual domain 1
 dual-active detection fast-hello
 
 Interface ra GigabitEthernet1/0/26-27
-desc --- VSL Fast Hello ---
+desc ### VSL Fast Hello ###
 dual-active fast-hello
 no shutdown
 
 interface ra GigabitEthernet2/0/26-27
-desc --- VSL Fast Hello ---
+desc ### VSL Fast Hello ###
 dual-active fast-hello
 no shutdown
 exit
