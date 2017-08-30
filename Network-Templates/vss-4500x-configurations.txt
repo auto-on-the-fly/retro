@@ -1,0 +1,98 @@
+###
+#
+# VSS Configuration - 4500X
+#
+###
+
+###
+#
+# VSS Switch 1
+#
+###
+
+
+configure terminal
+switch virtual domain 1
+switch 1
+mac-address use-virtual
+
+do wr mem
+
+
+interface Port-channel 50
+desc ### Switch-4500X 2 VSL ###
+switchport
+switch virtual link 1
+no shut
+
+interface range TenGigabitEthernet1/29-30
+channel-group 50 mode on
+no shutdown
+
+do wr mem
+exit
+
+switch convert mode virtual
+
+reload
+
+
+###
+#
+# VSS Switch 2
+#
+###
+
+
+configure terminal
+switch virtual domain 1
+switch 2
+mac-address use-virtual
+
+interface Port-channel 51
+desc ### Switch-4500X 1 VSL ###
+switchport
+switch virtual link 2
+no shut
+
+interface range TenGigabitEthernet1/31-32
+channel-group 51 mode on
+no shutdown
+
+do wr mem
+exit
+
+switch convert mode virtual
+
+reload
+
+
+###
+#
+# VSS Switch Active Switch
+#
+###
+
+
+configure terminal
+switch virtual domain 1
+switch 1 priority 110
+switch 2 priority 100
+
+
+switch virtual domain 1
+dual-active detection fast-hello
+
+Interface ra GigabitEthernet1/0/26-27
+desc --- VSL Fast Hello ---
+dual-active fast-hello
+no shutdown
+
+interface ra GigabitEthernet2/0/26-27
+desc --- VSL Fast Hello ---
+dual-active fast-hello
+no shutdown
+exit
+
+show switch virtual dual-active fast-hello ! verify
+
