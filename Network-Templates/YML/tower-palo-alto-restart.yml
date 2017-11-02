@@ -1,0 +1,21 @@
+# PanOS-Software install process
+---
+- name: PanOS-Software install process
+  gather_facts: true
+  connection: local
+  hosts: PaloAltoFirewalls
+
+  tasks:
+  
+  - name: import software image into PAN-OS
+    panos_import:
+     file: /tmp/PanOS_vm-6.1.1
+     category: software
+  
+  - name: install software
+    panos_swinstall:
+    file: PanOS_vm-6.1.1
+    
+  - panos_restart:
+      ip_address: "{{ hosts }}"
+      password: "{{ password }}"
